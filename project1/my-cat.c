@@ -1,9 +1,19 @@
-/**/
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+
+/*
+
+Jared Diamond
+Professor Bonamy
+CS 460
+
+A simple program that mimics the linux utility, cat. Files found on the cmd line
+will be printed to stdout. Read, write, and open are used for flexibility.
+
+*/
 
 int main(int argc, char *argv[])
 {
@@ -14,8 +24,9 @@ int main(int argc, char *argv[])
     int fd;
     int buffSize = 56;
     char buffer[buffSize];
-    int fileCount = 1;
+    int fileCount = 1;      // first file found at argv[1]
     
+    // while files found in argv, print them to stdout
     while(fileCount < argc){
         if(fd = open(argv[fileCount], O_RDONLY), fd < 0){
             printf("my-cat: cannot open file\n");
