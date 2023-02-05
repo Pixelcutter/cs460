@@ -18,7 +18,7 @@ reacquaint myself with them. They might be useful in future assignments.
 
 int main(int argc, char *argv[])
 {
-    // no files specified on the command line
+    // no files found on the command line
     if(argc < 2)
         return 0;
     
