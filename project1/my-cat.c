@@ -11,7 +11,8 @@ Professor Bonamy
 CS 460
 
 A simple program that mimics the linux utility, cat. Files found on the cmd line
-will be printed to stdout. Read, write, and open are used for flexibility.
+will be printed to stdout. I used read, write, and open because I wanted to
+reacquaint myself with them. They might be useful in future assignments.
 
 */
 
