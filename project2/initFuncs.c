@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "scheduling.h"
 
-int burstPop(char* rest){
+int strToInt(char* rest){
     int parsedNum;
     sscanf(rest, "%d", &parsedNum);
     return parsedNum;
@@ -28,8 +28,8 @@ process* initProc(char* procLine){
     newProc->nextProc = NULL;
     
     char* rest = procLine;
-    newProc->priority = burstPop(strtok_r(rest, " ", &rest));
-    newProc->scheduleLen = burstPop(strtok_r(rest, " ", &rest));
+    newProc->priority = strToInt(strtok_r(rest, " ", &rest));
+    newProc->scheduleLen = strToInt(strtok_r(rest, " ", &rest));
     newProc->schedule = malloc(sizeof(int) * newProc->scheduleLen);
 
     char* popped;
@@ -37,7 +37,7 @@ process* initProc(char* procLine){
         if((popped = strtok_r(rest, " ", &rest)), !popped)
             errExit("Invalid number of burst times found");
 
-        newProc->schedule[i] = burstPop(popped);
+        newProc->schedule[i] = strToInt(popped);
         // printf("i = %d\n", newProc->schedule[i]);
     }
 
