@@ -1,32 +1,12 @@
 /**/
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
-#include <sys/time.h>
 #include "scheduling.h"
 
-queue initQueue();
-process* initProc(char* procLine);
-long currentTimeMillis();
-long startTimeMillis;
-
-int main(int argc, char *argv[]){
-    // timestamp marking when the thread started
-    startTimeMillis = currentTimeMillis();
-
-    char whatever[] = "proc 1 5 20 50 60 79 90";
-
-    char* trash;
-    char* popped;
-    char* rest = whatever;
-
-    process *newProc;
-    popped = strtok_r(rest, " ", &rest);
-    if(!strcmp(popped, "proc"))
-        newProc = initProc(rest);
-    else
-        printf("not a process!\n");
+int burstPop(char* rest){
+    int parsedNum;
+    sscanf(rest, "%d", &parsedNum);
+    return parsedNum;
 }
 
 queue initQueue(){
@@ -34,26 +14,9 @@ queue initQueue(){
             .length = 0,
             .head = NULL,
             .tail = NULL
-        };
+          };
     
     return newQueue;
-}
-
-void errExit(char* message){
-    printf("ERROR: %s\n", message);
-    exit(1);
-}
-
-long currentTimeMillis(){
-    struct timeval currTime;
-    gettimeofday(&currTime, NULL);
-    return currTime.tv_sec * 1000;
-}
-
-int burstPop(char* rest){
-    int parsedNum;
-    sscanf(rest, "%d", &parsedNum);
-    return parsedNum;
 }
 
 process* initProc(char* procLine){

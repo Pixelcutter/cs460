@@ -1,11 +1,11 @@
-#ifndef SCHEDULING.H
-#define SCHEDULING.H
+#ifndef SCHEDULING  
+#define SCHEDULING  
 
 typedef struct process{
     int priority;
     int totalBurstTime;
-    int arrivalTimeMillis;
-    int finishTimeMillis;
+    long arrivalTimeMillis;
+    long finishTimeMillis;
     int nextIndex;
     int scheduleLen;
     int *schedule;
@@ -19,7 +19,8 @@ typedef struct queue{
     struct process *tail;
 } queue;
 
-extern *queue readyQueue;
-extern *queue ioQueue;
+extern queue readyQueue;
+extern queue ioQueue;
+extern long startTimeMillis;
 
 #endif
