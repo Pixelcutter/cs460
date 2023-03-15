@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include "global.h"
 
+// initializes queue data structures
 queue initQueue(){
     queue newQueue = {
             .length = 0,
@@ -14,28 +15,34 @@ queue initQueue(){
     return newQueue;
 }
 
+// convenient error handler function
 void errExit(char* message){
     printf("ERROR: %s\n", message);
     exit(1);
 }
 
+// gets the current time in milliseconds
 long currentTimeMillis(){
     struct timeval currTime;
     gettimeofday(&currTime, NULL);
     return currTime.tv_sec * 1000;
 }
 
+// converts strings to int
 int strToInt(char* rest){
     int parsedNum;
     sscanf(rest, "%d", &parsedNum);
     return parsedNum;
 }
 
+// Used to free proc memory at program end
 void freeProc(process *proc){
     free(proc->schedule);
     free(proc);
 }
 
+// initializes proccesses before they are added to the ready queue
+// proLine will be a line from a supplied file
 process* initProc(char* procLine){
     process *newProc = malloc(sizeof(process));
     
