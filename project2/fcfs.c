@@ -25,7 +25,7 @@ void* fcfsFunc(void* args){
         
         if(proc->nextIndex == proc->scheduleLen-1){
             procsCompleted++;
-            proc->finishTimeMillis = currentTimeMillis();
+            proc->finishTimeMillis = currentTimeMillis() - startTimeMillis;
             enqueue(doneQueue, proc);
             continue;
         }
