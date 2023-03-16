@@ -5,13 +5,11 @@
 #include "global.h"
 
 // initializes queue data structures
-queue initQueue(){
-    queue newQueue = {
-            .length = 0,
-            .head = NULL,
-            .tail = NULL
-        };
-    
+queue* initQueue(){
+    queue *newQueue = malloc(sizeof(queue));
+    newQueue->length = 0;
+    newQueue->head = newQueue->tail = NULL;
+
     return newQueue;
 }
 
@@ -69,4 +67,31 @@ process* initProc(char* procLine){
     }
     // printf("arrival time = %ld\n", newProc->arrivalTimeMillis);
     return newProc;
+}
+
+process* dequeue(queue* q){
+    if(q->head == NULL)
+        return NULL;
+
+    process* proc = q->head;
+    if(q->head == q->tail)
+        q->head = q->tail = NULL;
+    else{
+        q->head = q->head->nextProc;
+        q->head->prevProc = NULL;
+    }
+    proc->nextProc = proc->prevProc = NULL;
+    q->length--;
+    return proc;
+}
+
+void enqueue(queue* q, process* proc){
+    if(q->head == NULL)
+        q->head = proc;
+    else{
+        proc->prevProc = q->tail;
+        q->tail->nextProc = proc;
+    }
+    q->tail = proc;
+    q->length++;
 }

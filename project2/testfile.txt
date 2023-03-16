@@ -1,0 +1,9 @@
+proc 9 5 20 50 60 79 90
+proc 7 5 20 50 60 79 90
+sleep 50
+proc 5 5 20 50 60 79 90
+proc 1 5 20 50 60 79 90
+sleep 50
+proc 10 3 30 80 10
+sleep 50
+stop

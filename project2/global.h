@@ -1,6 +1,9 @@
 #ifndef GLOBAL_H 
 #define GLOBAL_H 
 
+#define TRUE 1
+#define FALSE 0
+
 typedef struct process{
     int priority;
     int totalBurstTime;
@@ -21,11 +24,12 @@ typedef struct queue{
     struct process *tail;
 } queue;
 
-enum ALGO { FCFS, SJF, PR, RR };
-
-extern queue readyQueue;
-extern queue ioQueue;
-extern int algType;
+extern queue* readyQueue;
+extern queue* ioQueue;
+extern queue* doneQueue;
+extern int procsSeen;
+extern int procsCompleted;
+extern int parsingDone;
 extern long startTimeMillis;
 
 #endif

@@ -1,0 +1,1 @@
+void* parseFile(void* p);

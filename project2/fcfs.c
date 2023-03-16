@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "scheduling.h"
+#include "global.h"
 
-int mainLoop_FCFS(void){
+static void* FCFS(void* args){
 
 }
