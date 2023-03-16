@@ -23,7 +23,9 @@ void errExit(char* message){
 long currentTimeMillis(){
     struct timeval currTime;
     gettimeofday(&currTime, NULL);
-    return currTime.tv_sec * 1000;
+    printf("bruh = %f\n", (double)currTime.tv_usec/1000);
+    printf("current time ms = %f\n", ((currTime.tv_sec * 1000) + ((double) currTime.tv_usec / 1000)));
+    return currTime.tv_usec / 1000;
 }
 
 // converts strings to int
@@ -45,7 +47,7 @@ process* initProc(char* procLine){
     process *newProc = malloc(sizeof(process));
     
     // arrival time = ( thread start time in ms ) - ( current time in ms )
-    newProc->arrivalTimeMillis = startTimeMillis - currentTimeMillis();
+    newProc->arrivalTimeMillis = currentTimeMillis() - startTimeMillis;
     newProc->finishTimeMillis = -1; // acts as a flag
     newProc->totalBurstTime = 0;
     newProc->nextIndex = 0;

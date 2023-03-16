@@ -16,11 +16,25 @@ pthread_cond_t readyQueueCond, ioQueueCond;
 int getThroughput(){
     return 42069;
 }
-int getAvgTurnaround(){
-    return 69;
+
+double getAvgTurnaround(){
+    process* proc = doneQueue->head;
+    int totalTurnaround = 0;
+    while(proc){
+        totalTurnaround += proc->finishTimeMillis - proc->arrivalTimeMillis;
+        proc = proc->nextProc;
+    }
+    return ( totalTurnaround / doneQueue->length );
 }
+
 int getAvgWaitTime(){
-    return 420;
+    process* proc = doneQueue->head;
+    int totalWaitTime = 0;
+    while(proc){
+        totalWaitTime += ( proc->finishTimeMillis - proc->arrivalTimeMillis ) - proc->totalBurstTime;
+        proc = proc->nextProc;
+    }
+    return ( totalWaitTime / doneQueue->length );
 }
 
 int main(int argc, char *argv[]){
@@ -74,22 +88,21 @@ int main(int argc, char *argv[]){
 
     pthread_join(cpuThread, NULL);
 
+    process* proc = doneQueue->head;
+    printf("done queue length = %d\n", doneQueue->length);
+    while(proc){
+        printf("arrival time = %ld | finish time = %ld\n", proc->arrivalTimeMillis, proc->finishTimeMillis);
+        proc = proc->nextProc;
+    }
+
     printf("Input File Name                 : %s\n", fileName);
     if(!strcmp(algStr, "RR"))
         printf("CPU Scheduling Alg              : %s (%d)\n", algStr, quantum);
     else
         printf("CPU Scheduling Alg              : %s\n", algStr);
     printf("Throughput                      : %d\n", getThroughput());
-    printf("Avg. Turnaround Time            : %d\n", getAvgTurnaround());
+    printf("Avg. Turnaround Time            : %f\n", getAvgTurnaround());
     printf("Avg. Waiting Time in Ready Queue: %d\n", getAvgWaitTime());
-        
-    
-
-
-    // argv[3] = '-input'
-    // char* fileName = argv[4];
-    // pthread_t parser;
-    // pthread_create(&parser, NULL, &parseFile, fileName);
     // pthread_join(parser, NULL);
 
     // printf("starting to print queue\n");
