@@ -25,7 +25,10 @@ void* parseFile(void* p){
             continue;
         }
         
+        pthread_mutex_lock(&readyQueueMutex);
         enqueue(readyQueue, initProc(rest));
+        pthread_mutex_unlock(&readyQueueMutex);
+        pthread_cond_signal(&readyQueueCond);
         procsSeen++;
     }
     parsingDone = TRUE;

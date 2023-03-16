@@ -1,14 +1,27 @@
 /**/
 #include <stdio.h>
 #include <string.h>
-#include <pthread.h>
 #include "global.h"
+#include "fcfs.h"
+#include "io.h"
 #include "utilFuncs.h"
 #include "parser.h"
 
 int parsingDone, procsSeen, procsCompleted;
 long startTimeMillis;
 queue *readyQueue, *ioQueue, *doneQueue;
+pthread_mutex_t readyQueueMutex, ioQueueMutex;
+pthread_cond_t readyQueueCond, ioQueueCond;
+
+int getThroughput(){
+    return 42069;
+}
+int getAvgTurnaround(){
+    return 69;
+}
+int getAvgWaitTime(){
+    return 420;
+}
 
 int main(int argc, char *argv[]){
     // initializing global variables
@@ -25,13 +38,14 @@ int main(int argc, char *argv[]){
     
     char* algStr = argv[2];
     char* fileName;
-    pthread_t cpuThread, parserThread, ioQueue;
+    int quantum;
+    pthread_t cpuThread, parserThread, ioThread;
 
     if(!strcmp(algStr, "RR")){
         if(argc != 7 || strcmp(argv[3], "-quantum"))
             errExit("Expected '-quantum' flag for algorithm: 'RR'");
 
-        int quantum = strToInt(argv[4]);
+        quantum = strToInt(argv[4]);
         fileName = argv[6];
         printf("starting cpu thread with < RR >..\n");
         pthread_create(&parserThread, NULL, &parseFile, fileName);
@@ -43,6 +57,7 @@ int main(int argc, char *argv[]){
         
         if(!strcmp(algStr, "FCFS")){
             printf("starting cpu thread with < FCFS >..\n");
+            pthread_create(&cpuThread, NULL, &fcfsFunc, NULL);
         }
         else if(!strcmp(algStr, "PR")){
             printf("starting cpu thread with < PR >..\n");
@@ -53,6 +68,20 @@ int main(int argc, char *argv[]){
         else
             errExit("Scheduling algorithm not recognized");
     }
+
+    pthread_create(&ioThread, NULL, &ioFunc, NULL);
+    pthread_detach(parserThread);
+
+    pthread_join(cpuThread, NULL);
+
+    printf("Input File Name                 : %s\n", fileName);
+    if(!strcmp(algStr, "RR"))
+        printf("CPU Scheduling Alg              : %s (%d)\n", algStr, quantum);
+    else
+        printf("CPU Scheduling Alg              : %s\n", algStr);
+    printf("Throughput                      : %d\n", getThroughput());
+    printf("Avg. Turnaround Time            : %d\n", getAvgTurnaround());
+    printf("Avg. Waiting Time in Ready Queue: %d\n", getAvgWaitTime());
         
     
 

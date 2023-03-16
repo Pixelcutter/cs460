@@ -1,5 +1,7 @@
 #ifndef GLOBAL_H 
-#define GLOBAL_H 
+#define GLOBAL_H
+
+#include <pthread.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -31,5 +33,10 @@ extern int procsSeen;
 extern int procsCompleted;
 extern int parsingDone;
 extern long startTimeMillis;
+
+extern pthread_mutex_t readyQueueMutex;
+extern pthread_mutex_t ioQueueMutex;
+extern pthread_cond_t  readyQueueCond;
+extern pthread_cond_t ioQueueCond;
 
 #endif
