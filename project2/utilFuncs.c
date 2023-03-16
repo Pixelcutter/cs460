@@ -20,12 +20,11 @@ void errExit(char* message){
 }
 
 // gets the current time in milliseconds
-long currentTimeMillis(){
+double currentTimeMillis(){
     struct timeval currTime;
     gettimeofday(&currTime, NULL);
-    printf("bruh = %f\n", (double)currTime.tv_usec/1000);
-    printf("current time ms = %f\n", ((currTime.tv_sec * 1000) + ((double) currTime.tv_usec / 1000)));
-    return currTime.tv_usec / 1000;
+    double timeInMillis = (currTime.tv_sec * 1000) + (double)currTime.tv_usec/1000;
+    return timeInMillis;
 }
 
 // converts strings to int

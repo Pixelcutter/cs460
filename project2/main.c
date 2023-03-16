@@ -8,14 +8,10 @@
 #include "parser.h"
 
 int parsingDone, procsSeen, procsCompleted;
-long startTimeMillis;
+double startTimeMillis, endTimeMillis;
 queue *readyQueue, *ioQueue, *doneQueue;
 pthread_mutex_t readyQueueMutex, ioQueueMutex;
 pthread_cond_t readyQueueCond, ioQueueCond;
-
-int getThroughput(){
-    return 42069;
-}
 
 double getAvgTurnaround(){
     process* proc = doneQueue->head;
@@ -24,17 +20,17 @@ double getAvgTurnaround(){
         totalTurnaround += proc->finishTimeMillis - proc->arrivalTimeMillis;
         proc = proc->nextProc;
     }
-    return ( totalTurnaround / doneQueue->length );
+    return (double)totalTurnaround / doneQueue->length;
 }
 
-int getAvgWaitTime(){
+double getAvgWaitTime(){
     process* proc = doneQueue->head;
     int totalWaitTime = 0;
     while(proc){
         totalWaitTime += ( proc->finishTimeMillis - proc->arrivalTimeMillis ) - proc->totalBurstTime;
         proc = proc->nextProc;
     }
-    return ( totalWaitTime / doneQueue->length );
+    return (double)totalWaitTime / doneQueue->length;
 }
 
 int main(int argc, char *argv[]){
@@ -87,11 +83,13 @@ int main(int argc, char *argv[]){
     pthread_detach(parserThread);
 
     pthread_join(cpuThread, NULL);
+    endTimeMillis = currentTimeMillis();
 
     process* proc = doneQueue->head;
     printf("done queue length = %d\n", doneQueue->length);
+    printf("end time = %f\n", endTimeMillis - startTimeMillis);
     while(proc){
-        printf("arrival time = %ld | finish time = %ld\n", proc->arrivalTimeMillis, proc->finishTimeMillis);
+        printf("arrival time = %f | finish time = %f\n", proc->arrivalTimeMillis, proc->finishTimeMillis);
         proc = proc->nextProc;
     }
 
@@ -100,9 +98,9 @@ int main(int argc, char *argv[]){
         printf("CPU Scheduling Alg              : %s (%d)\n", algStr, quantum);
     else
         printf("CPU Scheduling Alg              : %s\n", algStr);
-    printf("Throughput                      : %d\n", getThroughput());
+    printf("Throughput                      : %f\n", doneQueue->length / ( endTimeMillis - startTimeMillis ));
     printf("Avg. Turnaround Time            : %f\n", getAvgTurnaround());
-    printf("Avg. Waiting Time in Ready Queue: %d\n", getAvgWaitTime());
+    printf("Avg. Waiting Time in Ready Queue: %f\n", getAvgWaitTime());
     // pthread_join(parser, NULL);
 
     // printf("starting to print queue\n");

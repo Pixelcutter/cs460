@@ -3,7 +3,7 @@
 
 queue* initQueue();
 void errExit(char* message);
-long currentTimeMillis();
+double currentTimeMillis();
 int strToInt(char* rest);
 void freeProc(process *proc);
 process* initProc(char* procLine);

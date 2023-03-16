@@ -9,8 +9,8 @@
 typedef struct process{
     int priority;
     int totalBurstTime;
-    long arrivalTimeMillis;
-    long finishTimeMillis;
+    double arrivalTimeMillis;
+    double finishTimeMillis;
 
     int nextIndex;
     int scheduleLen;
@@ -32,7 +32,9 @@ extern queue* doneQueue;
 extern int procsSeen;
 extern int procsCompleted;
 extern int parsingDone;
-extern long startTimeMillis;
+
+extern double startTimeMillis;
+extern double endTimeMillis;
 
 extern pthread_mutex_t readyQueueMutex;
 extern pthread_mutex_t ioQueueMutex;
