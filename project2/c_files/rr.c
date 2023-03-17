@@ -48,5 +48,6 @@ void* rrFunc(void* p){
             enqueue(readyQueue, proc);
         }
     }
+    // cpuDone = TRUE;
     return NULL;
 }

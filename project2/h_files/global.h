@@ -33,6 +33,7 @@ extern queue* doneQueue;
 extern int procsSeen;
 extern int procsCompleted;
 extern int parsingDone;
+extern int cpuDone;
 
 extern double startTimeMillis;
 extern double endTimeMillis;

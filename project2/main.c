@@ -9,8 +9,9 @@
 #include "./h_files/sjf.h"
 #include "./h_files/pr.h"
 #include "./h_files/rr.h"
+#include "./h_files/printStats.h"
 
-int parsingDone, procsSeen, procsCompleted;
+int parsingDone, cpuDone, procsSeen, procsCompleted;
 double startTimeMillis, endTimeMillis;
 queue *readyQueue, *ioQueue, *doneQueue;
 pthread_mutex_t readyQueueMutex, ioQueueMutex;
@@ -19,22 +20,27 @@ pthread_cond_t readyQueueCond, ioQueueCond;
 int main(int argc, char *argv[]){
     // initializing global variables
     readyQueue = initQueue(), ioQueue = initQueue(), doneQueue = initQueue();
-    parsingDone = FALSE;
+    parsingDone = cpuDone = FALSE;
     procsSeen = procsCompleted = 0;
+
+    pthread_mutex_init(&readyQueueMutex, NULL);
+    pthread_mutex_init(&ioQueueMutex, NULL);
+    pthread_cond_init(&readyQueueCond, NULL);
+    pthread_cond_init(&ioQueueCond, NULL);
     
     if(argc < 5 || argc > 7)
         errExit("Invalid number of arguments\nUsage: ./exec -alg [FCFS|SJF|PR|RR] [-quantum [integer(ms)]] -input [filename]");
 
     if(strcmp(argv[1], "-alg"))
         errExit("Invalid first argument. Expected: '-alg'");
-    
-    pthread_t cpuThread, parserThread, ioThread;
     char* algStr = argv[2];
-    char* fileName;
-    int quantum;
     
     // start time set after error checking for better accuracy
     startTimeMillis = currentTimeMillis();
+
+    pthread_t cpuThread, parserThread, ioThread;
+    char* fileName;
+    int quantum;
 
     if(!strcmp(algStr, "RR")){
         if(argc != 7 || strcmp(argv[3], "-quantum"))
@@ -68,13 +74,13 @@ int main(int argc, char *argv[]){
 
     pthread_join(cpuThread, NULL);
     endTimeMillis = currentTimeMillis();
+    cpuDone = TRUE;
+    pthread_cond_signal(&ioQueueCond);
 
-    printf("Input File Name                 : %s\n", fileName);
-    if(!strcmp(algStr, "RR"))
-        printf("CPU Scheduling Alg              : %s (%d)\n", algStr, quantum);
-    else
-        printf("CPU Scheduling Alg              : %s\n", algStr);
-    printf("Throughput                      : %f\n", doneQueue->length / ( endTimeMillis - startTimeMillis ));
-    printf("Avg. Turnaround Time            : %f\n", getAvgTurnaround());
-    printf("Avg. Waiting Time in Ready Queue: %f\n", getAvgWaitTime());
+    pthread_mutex_destroy(&readyQueueMutex);
+    pthread_mutex_destroy(&ioQueueMutex);
+    pthread_cond_destroy(&readyQueueCond);
+    pthread_cond_destroy(&ioQueueCond);
+
+    printStats(fileName, algStr, quantum);
 }

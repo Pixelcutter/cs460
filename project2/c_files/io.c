@@ -9,12 +9,14 @@
 
 void* ioFunc(void* args){
     while(TRUE){
-        if((procsSeen == procsCompleted) && parsingDone)
-            break;
-
         pthread_mutex_lock(&ioQueueMutex);
         while(ioQueue->head == NULL){
+            // printf("IO procsSeen: %d | procsCompleted: %d | cpuDone: %d | parserDone %d\n", procsSeen, procsCompleted, cpuDone, parsingDone);
             pthread_cond_wait(&ioQueueCond, &ioQueueMutex);
+            if(cpuDone){
+                pthread_mutex_unlock(&ioQueueMutex);
+                return NULL;
+            }
         }
         process* proc = dequeue(ioQueue);
         pthread_mutex_unlock(&ioQueueMutex);
@@ -27,8 +29,9 @@ void* ioFunc(void* args){
 
         enqueue(readyQueue, proc);
 
-        pthread_mutex_unlock(&readyQueueMutex);
         pthread_cond_signal(&readyQueueCond);
+        pthread_mutex_unlock(&readyQueueMutex);
     }
+    printf("----- IO thread done... --------\n");
     return NULL;
 }

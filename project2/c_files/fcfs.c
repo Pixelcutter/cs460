@@ -14,6 +14,7 @@ void* fcfsFunc(void* args){
         pthread_mutex_lock(&readyQueueMutex);
         while(readyQueue->head == NULL){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
+            printf("CPU is done waiting..\n");
         }
         process* proc = dequeue(readyQueue);
         pthread_mutex_unlock(&readyQueueMutex);
@@ -33,8 +34,9 @@ void* fcfsFunc(void* args){
         
         pthread_mutex_lock(&ioQueueMutex);
         enqueue(ioQueue, proc);
-        pthread_mutex_unlock(&ioQueueMutex);
         pthread_cond_signal(&ioQueueCond);
+        pthread_mutex_unlock(&ioQueueMutex);
     }
+    cpuDone = TRUE;
     return NULL;
 }

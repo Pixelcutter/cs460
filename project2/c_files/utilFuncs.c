@@ -39,26 +39,6 @@ void freeProc(process *proc){
     free(proc);
 }
 
-double getAvgTurnaround(){
-    process* proc = doneQueue->head;
-    int totalTurnaround = 0;
-    while(proc){
-        totalTurnaround += proc->finishTimeMillis - proc->arrivalTimeMillis;
-        proc = proc->nextProc;
-    }
-    return (double)totalTurnaround / doneQueue->length;
-}
-
-double getAvgWaitTime(){
-    process* proc = doneQueue->head;
-    int totalWaitTime = 0;
-    while(proc){
-        totalWaitTime += ( proc->finishTimeMillis - proc->arrivalTimeMillis ) - proc->totalBurstTime;
-        proc = proc->nextProc;
-    }
-    return (double)totalWaitTime / doneQueue->length;
-}
-
 process* dequeue(queue* q){
     if(q->head == NULL)
         return NULL;

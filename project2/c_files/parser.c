@@ -10,7 +10,7 @@
 process* initProc(char* procLine){
     process *newProc = malloc(sizeof(process));
     
-    // arrival time = ( thread start time in ms ) - ( current time in ms )
+    // arrival time = ( current time in ms ) - ( thread start in ms )
     newProc->arrivalTimeMillis = currentTimeMillis() - startTimeMillis;
     newProc->finishTimeMillis = -1; // acts as a flag
     newProc->totalBurstTime = 0;
@@ -59,8 +59,9 @@ void* parseFile(void* p){
 
         enqueue(readyQueue, proc);
 
-        pthread_mutex_unlock(&readyQueueMutex);
         pthread_cond_signal(&readyQueueCond);
+        pthread_mutex_unlock(&readyQueueMutex);
+        
         procsSeen++;
     }
     parsingDone = TRUE;
