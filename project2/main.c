@@ -1,14 +1,14 @@
 /**/
 #include <stdio.h>
 #include <string.h>
-#include "global.h"
-#include "fcfs.h"
-#include "io.h"
-#include "utilFuncs.h"
-#include "parser.h"
-#include "sjf.h"
-#include "pr.h"
-#include "rr.h"
+#include "./h_files/global.h"
+#include "./h_files/fcfs.h"
+#include "./h_files/io.h"
+#include "./h_files/utilFuncs.h"
+#include "./h_files/parser.h"
+#include "./h_files/sjf.h"
+#include "./h_files/pr.h"
+#include "./h_files/rr.h"
 
 int parsingDone, procsSeen, procsCompleted;
 double startTimeMillis, endTimeMillis;
