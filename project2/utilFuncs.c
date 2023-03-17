@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/time.h>
 #include "global.h"
 
@@ -40,34 +39,24 @@ void freeProc(process *proc){
     free(proc);
 }
 
-// initializes proccesses before they are added to the ready queue
-// proLine will be a line from a supplied file
-process* initProc(char* procLine){
-    process *newProc = malloc(sizeof(process));
-    
-    // arrival time = ( thread start time in ms ) - ( current time in ms )
-    newProc->arrivalTimeMillis = currentTimeMillis() - startTimeMillis;
-    newProc->finishTimeMillis = -1; // acts as a flag
-    newProc->totalBurstTime = 0;
-    newProc->nextIndex = 0;
-    newProc->prevProc = NULL;
-    newProc->nextProc = NULL;
-    
-    char* rest = procLine;
-    newProc->priority = strToInt(strtok_r(rest, " ", &rest));
-    newProc->scheduleLen = strToInt(strtok_r(rest, " ", &rest));
-    newProc->schedule = malloc(sizeof(int) * newProc->scheduleLen);
-
-    char* popped;
-    for(int i = 0; i < newProc->scheduleLen; i++){
-        if((popped = strtok_r(rest, " ", &rest)), !popped)
-            errExit("Invalid number of burst times found");
-
-        newProc->schedule[i] = strToInt(popped);
-        // printf("i = %d\n", newProc->schedule[i]);
+double getAvgTurnaround(){
+    process* proc = doneQueue->head;
+    int totalTurnaround = 0;
+    while(proc){
+        totalTurnaround += proc->finishTimeMillis - proc->arrivalTimeMillis;
+        proc = proc->nextProc;
     }
-    // printf("arrival time = %ld\n", newProc->arrivalTimeMillis);
-    return newProc;
+    return (double)totalTurnaround / doneQueue->length;
+}
+
+double getAvgWaitTime(){
+    process* proc = doneQueue->head;
+    int totalWaitTime = 0;
+    while(proc){
+        totalWaitTime += ( proc->finishTimeMillis - proc->arrivalTimeMillis ) - proc->totalBurstTime;
+        proc = proc->nextProc;
+    }
+    return (double)totalWaitTime / doneQueue->length;
 }
 
 process* dequeue(queue* q){

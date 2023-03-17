@@ -2,15 +2,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "global.h"
+#include "../h_files/global.h"
 #include "utilFuncs.h"
 
-void* rrFunc(void* args){
+void* rrFunc(void* p){
+    int quantum = *((int*)p);
+
     while(TRUE){
         if((procsSeen == procsCompleted) && parsingDone)
             break;
-        // catching when ready queue is empty but io or parser threads are still
-        // running and could add to ready queue
+        // catching when ready queue is empty but could still be added to by
+        // io or parser threads
         pthread_mutex_lock(&readyQueueMutex);
         while(readyQueue->head == NULL){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
@@ -19,22 +21,32 @@ void* rrFunc(void* args){
         pthread_mutex_unlock(&readyQueueMutex);
         
         int nextBurst = proc->schedule[proc->nextIndex];
+        
+        if(nextBurst > quantum)
+            nextBurst = quantum;
+            
         proc->totalBurstTime += nextBurst;
-        // printf("cpu thread sleeping for < %d > seconds\n", nextBurst);
+        proc->schedule[proc->nextIndex] -= nextBurst;
         usleep(nextBurst * 1000);
-        
-        if(proc->nextIndex == proc->scheduleLen-1){
-            procsCompleted++;
-            proc->finishTimeMillis = currentTimeMillis() - startTimeMillis;
-            enqueue(doneQueue, proc);
-            continue;
+
+        if(proc->schedule[proc->nextIndex] == 0){
+            if(proc->nextIndex == proc->scheduleLen-1){
+                procsCompleted++;
+                proc->finishTimeMillis = currentTimeMillis() - startTimeMillis;
+                enqueue(doneQueue, proc);
+            }
+            else{
+                proc->nextIndex++;
+                
+                pthread_mutex_lock(&ioQueueMutex);
+                enqueue(ioQueue, proc);
+                pthread_mutex_unlock(&ioQueueMutex);
+                pthread_cond_signal(&ioQueueCond);
+            }
         }
-        proc->nextIndex++;
-        
-        pthread_mutex_lock(&ioQueueMutex);
-        enqueue(ioQueue, proc);
-        pthread_mutex_unlock(&ioQueueMutex);
-        pthread_cond_signal(&ioQueueCond);
+        else{
+            enqueue(readyQueue, proc);
+        }
     }
-    printf("cpu thread is done\n");
+    return NULL;
 }

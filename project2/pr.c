@@ -5,8 +5,47 @@
 #include "global.h"
 #include "utilFuncs.h"
 
-void* prSort(queue* q){
+
+process* getHighestPrio(queue* q){
+    process* proc = q->head;
+    if(q->head == q->tail){
+        q->head = q->tail = NULL;
+        proc->nextProc = proc->prevProc = NULL;
+        return proc;
+    }
+
+    process* highestPrio = proc;
+    while(proc){
+        if(proc->priority > highestPrio->priority)
+            highestPrio = proc;
+        proc = proc->nextProc;
+    }
+
+    if(highestPrio == q->head){
+        q->head = highestPrio->nextProc;
+        highestPrio->nextProc->prevProc = NULL;
+    }
+    else if(highestPrio == q->tail){
+        q->tail = highestPrio->prevProc;
+        highestPrio->prevProc->nextProc = NULL;
+    }
+    else{
+        highestPrio->prevProc->nextProc = highestPrio->nextProc;
+        highestPrio->nextProc->prevProc = highestPrio->prevProc;
+    }   
     
+    highestPrio->nextProc = highestPrio->prevProc = NULL;
+    q->length--;
+
+    // printf("highest prio = %d | the rest [ ", highestPrio->priority);
+    // process* tmp = q->head;
+    // while(tmp){
+    //     printf("%d, ", tmp->priority);
+    //     tmp = tmp->nextProc;
+    // }
+    // printf(" ]\n");
+
+    return highestPrio;
 }
 
 void* prFunc(void* args){
@@ -19,7 +58,8 @@ void* prFunc(void* args){
         while(readyQueue->head == NULL){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
         }
-        process* proc = dequeue(readyQueue);
+        // process* proc = dequeue(readyQueue);
+        process* proc = getHighestPrio(readyQueue);
         pthread_mutex_unlock(&readyQueueMutex);
         
         int nextBurst = proc->schedule[proc->nextIndex];
@@ -40,5 +80,5 @@ void* prFunc(void* args){
         pthread_mutex_unlock(&ioQueueMutex);
         pthread_cond_signal(&ioQueueCond);
     }
-    printf("cpu thread is done\n");
+    return NULL;
 }

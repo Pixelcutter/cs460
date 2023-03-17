@@ -36,5 +36,5 @@ void* fcfsFunc(void* args){
         pthread_mutex_unlock(&ioQueueMutex);
         pthread_cond_signal(&ioQueueCond);
     }
-    printf("cpu thread is done\n");
+    return NULL;
 }

@@ -5,14 +5,46 @@
 #include "global.h"
 #include "utilFuncs.h"
 
-void* sjfSort(queue* q){
-    if(readyQueue->head == readyQueue->tail)
-        return;
-    
-    process* curr = readyQueue->tail;
-    process* prev = curr->prevProc;
-    
+process* getShortest(queue* q){
+    process* proc = q->head;
+    if(q->head == q->tail){
+        q->head = q->tail = NULL;
+        proc->nextProc = proc->prevProc = NULL;
+        return proc;
+    }
 
+    process* lowest = proc;
+    while(proc){
+        if(proc->schedule[proc->nextIndex] < lowest->schedule[lowest->nextIndex])
+            lowest = proc;
+        proc = proc->nextProc;
+    }
+
+    if(lowest == q->head){
+        q->head = lowest->nextProc;
+        lowest->nextProc->prevProc = NULL;
+    }
+    else if(lowest == q->tail){
+        q->tail = lowest->prevProc;
+        lowest->prevProc->nextProc = NULL;
+    }
+    else{
+        lowest->prevProc->nextProc = lowest->nextProc;
+        lowest->nextProc->prevProc = lowest->prevProc;
+    }   
+    
+    lowest->nextProc = lowest->prevProc = NULL;
+    q->length--;
+
+    // printf("shortest time = %d | the rest [ ", lowest->schedule[lowest->nextIndex]);
+    // process* tmp = q->head;
+    // while(tmp){
+    //     printf("%d, ", tmp->schedule[tmp->nextIndex]);
+    //     tmp = tmp->nextProc;
+    // }
+    // printf(" ]\n");
+
+    return lowest;
 }
 
 void* sjfFunc(void* args){
@@ -25,12 +57,12 @@ void* sjfFunc(void* args){
         while(readyQueue->head == NULL){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
         }
-        process* proc = dequeue(readyQueue);
+        process* proc = getShortest(readyQueue);
         pthread_mutex_unlock(&readyQueueMutex);
         
         int nextBurst = proc->schedule[proc->nextIndex];
         proc->totalBurstTime += nextBurst;
-        // printf("cpu thread sleeping for < %d > seconds\n", nextBurst);
+        printf("cpu thread sleeping for < %d > seconds\n", nextBurst);
         usleep(nextBurst * 1000);
         
         if(proc->nextIndex == proc->scheduleLen-1){
@@ -46,5 +78,5 @@ void* sjfFunc(void* args){
         pthread_mutex_unlock(&ioQueueMutex);
         pthread_cond_signal(&ioQueueCond);
     }
-    printf("cpu thread is done\n");
+    return NULL;
 }

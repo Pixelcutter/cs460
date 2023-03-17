@@ -4,6 +4,8 @@
 #include <string.h>
 #include "global.h"
 #include "utilFuncs.h"
+#include "sjf.h"
+#include "pr.h"
 
 void* ioFunc(void* args){
     while(TRUE){
@@ -22,8 +24,11 @@ void* ioFunc(void* args){
         proc->nextIndex++;
 
         pthread_mutex_lock(&readyQueueMutex);
+
         enqueue(readyQueue, proc);
+
         pthread_mutex_unlock(&readyQueueMutex);
         pthread_cond_signal(&readyQueueCond);
     }
+    return NULL;
 }

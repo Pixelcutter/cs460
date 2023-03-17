@@ -6,8 +6,9 @@ void errExit(char* message);
 double currentTimeMillis();
 int strToInt(char* rest);
 void freeProc(process *proc);
-process* initProc(char* procLine);
 process* dequeue(queue* q);
 void enqueue(queue* q, process* proc);
+double getAvgTurnaround();
+double getAvgWaitTime();
 
 #endif
