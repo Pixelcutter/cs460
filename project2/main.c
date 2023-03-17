@@ -1,6 +1,7 @@
 /**/
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "./h_files/global.h"
 #include "./h_files/fcfs.h"
 #include "./h_files/io.h"
@@ -74,8 +75,7 @@ int main(int argc, char *argv[]){
 
     pthread_join(cpuThread, NULL);
     endTimeMillis = currentTimeMillis();
-    cpuDone = TRUE;
-    pthread_cond_signal(&ioQueueCond);
+
 
     pthread_mutex_destroy(&readyQueueMutex);
     pthread_mutex_destroy(&ioQueueMutex);
@@ -83,4 +83,17 @@ int main(int argc, char *argv[]){
     pthread_cond_destroy(&ioQueueCond);
 
     printStats(fileName, algStr, quantum);
+
+    process* curr = doneQueue->head;
+    process* prev = curr;
+    free(readyQueue);
+    free(ioQueue);
+    
+    while(curr){
+        prev = curr;
+        curr = curr->nextProc;
+        freeProc(prev);
+    }
+
+    free(doneQueue);
 }

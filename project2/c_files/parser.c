@@ -30,6 +30,9 @@ process* initProc(char* procLine){
 
         newProc->schedule[i] = strToInt(popped);
     }
+
+    // free(popped);
+
     return newProc;
 }
 
@@ -40,9 +43,10 @@ void* parseFile(void* p){
     char* rest = NULL;
     size_t len = 0;
     ssize_t nRead;
+    char* popped;
 
     while(nRead = getline(&rest, &len, fp), nRead > 0){
-        char* popped = strtok_r(rest, " ", &rest);
+        popped = strtok_r(rest, " ", &rest);
 
         if(!strcmp(popped, "stop"))
             break;
@@ -58,12 +62,14 @@ void* parseFile(void* p){
         pthread_mutex_lock(&readyQueueMutex);
 
         enqueue(readyQueue, proc);
+        procsSeen++;
 
         pthread_cond_signal(&readyQueueCond);
         pthread_mutex_unlock(&readyQueueMutex);
-        
-        procsSeen++;
     }
+    
+    fclose(fp);
+    free(rest);
     parsingDone = TRUE;
     return NULL;
 }

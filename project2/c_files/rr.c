@@ -9,13 +9,13 @@ void* rrFunc(void* p){
     int quantum = *((int*)p);
 
     while(TRUE){
-        if((procsSeen == procsCompleted) && parsingDone)
-            break;
         // catching when ready queue is empty but could still be added to by
         // io or parser threads
         pthread_mutex_lock(&readyQueueMutex);
         while(readyQueue->head == NULL){
+            // printf("CPU waiting...\n");
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
+            // printf("CPU done waiting...\n");
         }
         process* proc = dequeue(readyQueue);
         pthread_mutex_unlock(&readyQueueMutex);
@@ -34,6 +34,12 @@ void* rrFunc(void* p){
                 procsCompleted++;
                 proc->finishTimeMillis = currentTimeMillis() - startTimeMillis;
                 enqueue(doneQueue, proc);
+                
+                if(procsCompleted == procsSeen && parsingDone){
+                    cpuDone = TRUE;
+                    pthread_cond_signal(&ioQueueCond);
+                    break;
+                }
             }
             else{
                 proc->nextIndex++;
@@ -48,6 +54,6 @@ void* rrFunc(void* p){
             enqueue(readyQueue, proc);
         }
     }
-    // cpuDone = TRUE;
+    // printf("------ CPU DONE -------\n");
     return NULL;
 }

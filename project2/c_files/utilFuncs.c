@@ -56,11 +56,14 @@ process* dequeue(queue* q){
 }
 
 void enqueue(queue* q, process* proc){
-    if(q->head == NULL)
+    if(q->head == NULL){
         q->head = proc;
+        proc->prevProc = NULL;
+    }
     else{
         proc->prevProc = q->tail;
         q->tail->nextProc = proc;
+        proc->nextProc = NULL;
     }
     q->tail = proc;
     q->length++;
