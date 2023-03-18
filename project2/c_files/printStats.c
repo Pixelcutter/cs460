@@ -6,6 +6,7 @@ double getAvgTurnaround(){
     process* proc = doneQueue->head;
     int totalTurnaround = 0;
     while(proc){
+        // printf("arrival: %f | finish: %f | burst: %d\n", proc->arrivalTimeMillis, proc->finishTimeMillis, proc->totalBurstTime);
         totalTurnaround += proc->finishTimeMillis - proc->arrivalTimeMillis;
         proc = proc->nextProc;
     }

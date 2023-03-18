@@ -38,25 +38,28 @@ void* parseFile(void* p){
     char* fileName = (char*) p;
     FILE* fp = fopen(fileName, "r");
 
-    char* rest = NULL;
+    char* line = NULL;
     size_t len = 0;
     ssize_t nRead;
     char* popped;
+    char* tmp;
 
-    while(nRead = getline(&rest, &len, fp), nRead > 0){
-        popped = strtok_r(rest, " ", &rest);
+    while(nRead = getline(&line, &len, fp), nRead > 0){
+        // rest is lost and can't be free'd once changed by strtok_r
+        tmp = line;
+        popped = strtok_r(tmp, " ", &tmp);
 
         if(!strcmp(popped, "stop"))
             break;
         
         if(!strcmp(popped, "sleep")){
-            popped = strtok_r(rest, " ", &rest);
+            popped = strtok_r(tmp, " ", &tmp);
             int sleepTime = strToInt(popped);
             usleep(sleepTime * 1000);
             continue;
         }
 
-        process* proc = initProc(rest);
+        process* proc = initProc(tmp);
         pthread_mutex_lock(&readyQueueMutex);
 
         enqueue(readyQueue, proc);
@@ -67,7 +70,7 @@ void* parseFile(void* p){
     }
     
     fclose(fp);
-    // free(rest);
+    free(line);
     parsingDone = TRUE;
     return NULL;
 }
