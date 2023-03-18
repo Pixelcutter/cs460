@@ -50,8 +50,8 @@ process* getHighestPrio(queue* q){
 
 void* prFunc(void* args){
     while(TRUE){
-        if((procsSeen == procsCompleted) && parsingDone)
-            break;
+        // if((procsSeen == procsCompleted) && parsingDone)
+        //     break;
         // catching when ready queue is empty but io or parser threads are still
         // running and could add to ready queue
         pthread_mutex_lock(&readyQueueMutex);
@@ -71,6 +71,13 @@ void* prFunc(void* args){
             procsCompleted++;
             proc->finishTimeMillis = currentTimeMillis() - startTimeMillis;
             enqueue(doneQueue, proc);
+
+            if(procsCompleted == procsSeen && parsingDone){
+                cpuDone = TRUE;
+                pthread_cond_signal(&ioQueueCond);
+                break;
+            }
+
             continue;
         }
         proc->nextIndex++;

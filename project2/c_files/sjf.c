@@ -49,8 +49,8 @@ process* getShortest(queue* q){
 
 void* sjfFunc(void* args){
     while(TRUE){
-        if((procsSeen == procsCompleted) && parsingDone)
-            break;
+        // if((procsSeen == procsCompleted) && parsingDone)
+        //     break;
         // catching when ready queue is empty but io or parser threads are still
         // running and could add to ready queue
         pthread_mutex_lock(&readyQueueMutex);
@@ -62,13 +62,20 @@ void* sjfFunc(void* args){
         
         int nextBurst = proc->schedule[proc->nextIndex];
         proc->totalBurstTime += nextBurst;
-        printf("cpu thread sleeping for < %d > seconds\n", nextBurst);
+        // printf("cpu thread sleeping for < %d > seconds\n", nextBurst);
         usleep(nextBurst * 1000);
         
         if(proc->nextIndex == proc->scheduleLen-1){
             procsCompleted++;
             proc->finishTimeMillis = currentTimeMillis() - startTimeMillis;
             enqueue(doneQueue, proc);
+
+            if(procsCompleted == procsSeen && parsingDone){
+                cpuDone = TRUE;
+                pthread_cond_signal(&ioQueueCond);
+                break;
+            }
+
             continue;
         }
         proc->nextIndex++;

@@ -31,8 +31,6 @@ process* initProc(char* procLine){
         newProc->schedule[i] = strToInt(popped);
     }
 
-    // free(popped);
-
     return newProc;
 }
 
@@ -57,7 +55,7 @@ void* parseFile(void* p){
             usleep(sleepTime * 1000);
             continue;
         }
-        
+
         process* proc = initProc(rest);
         pthread_mutex_lock(&readyQueueMutex);
 
@@ -69,7 +67,7 @@ void* parseFile(void* p){
     }
     
     fclose(fp);
-    free(rest);
+    // free(rest);
     parsingDone = TRUE;
     return NULL;
 }
