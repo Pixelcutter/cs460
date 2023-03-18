@@ -8,5 +8,6 @@ int strToInt(char* rest);
 void freeProc(process *proc);
 process* dequeue(queue* q);
 void enqueue(queue* q, process* proc);
+void freeQueues();
 
 #endif

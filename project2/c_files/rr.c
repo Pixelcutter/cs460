@@ -13,9 +13,9 @@ void* rrFunc(void* p){
         // io or parser threads
         pthread_mutex_lock(&readyQueueMutex);
         while(readyQueue->head == NULL){
-            // printf("CPU waiting...\n");
+            printf("CPU waiting...\n");
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
-            // printf("CPU done waiting...\n");
+            printf("CPU done waiting...\n");
         }
         process* proc = dequeue(readyQueue);
         pthread_mutex_unlock(&readyQueueMutex);

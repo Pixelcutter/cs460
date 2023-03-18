@@ -44,8 +44,14 @@ int main(int argc, char *argv[]){
     int quantum;
 
     if(!strcmp(algStr, "RR")){
-        if(argc != 7 || strcmp(argv[3], "-quantum"))
+        if(argc != 7)
+            errExit("Not enough arguments\nUsage: ./exec -alg RR -quantum [integer(ms)] -input [filename]");
+
+        if(strcmp(argv[3], "-quantum"))
             errExit("Expected '-quantum' flag for algorithm: 'RR'");
+
+        if(strcmp(argv[5], "-input"))
+            errExit("Expected option '-input'\nUsage: ./exec -alg RR -quantum [integer(ms)] -input [filename]");
 
         quantum = strToInt(argv[4]);
         fileName = argv[6];
@@ -56,6 +62,9 @@ int main(int argc, char *argv[]){
         pthread_create(&cpuThread, NULL, &rrFunc, &quantum);
     }
     else{
+        if(strcmp(argv[3], "-input"))
+            errExit("Expected option '-input'\nUsage: ./exec -alg [FCFS|SJF|PR] -input [filename]");
+
         fileName = argv[4];
         pthread_create(&parserThread, NULL, &parseFile, fileName);
         pthread_detach(parserThread);
@@ -75,25 +84,12 @@ int main(int argc, char *argv[]){
 
     pthread_join(cpuThread, NULL);
     endTimeMillis = currentTimeMillis();
-
+    printStats(fileName, algStr, quantum);
 
     pthread_mutex_destroy(&readyQueueMutex);
     pthread_mutex_destroy(&ioQueueMutex);
     pthread_cond_destroy(&readyQueueCond);
     pthread_cond_destroy(&ioQueueCond);
 
-    printStats(fileName, algStr, quantum);
-
-    process* curr = doneQueue->head;
-    process* prev = curr;
-    free(readyQueue);
-    free(ioQueue);
-    
-    while(curr){
-        prev = curr;
-        curr = curr->nextProc;
-        freeProc(prev);
-    }
-
-    free(doneQueue);
+    freeQueues();
 }

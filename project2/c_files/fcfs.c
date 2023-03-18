@@ -12,14 +12,12 @@ void* fcfsFunc(void* args){
         pthread_mutex_lock(&readyQueueMutex);
         while(readyQueue->head == NULL){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
-            // printf("CPU is done waiting..\n");
         }
         process* proc = dequeue(readyQueue);
         pthread_mutex_unlock(&readyQueueMutex);
         
         int nextBurst = proc->schedule[proc->nextIndex];
         proc->totalBurstTime += nextBurst;
-        // printf("cpu thread sleeping for < %d > seconds\n", nextBurst);
         usleep(nextBurst * 1000);
         
         if(proc->nextIndex == proc->scheduleLen-1){
@@ -39,9 +37,8 @@ void* fcfsFunc(void* args){
         
         pthread_mutex_lock(&ioQueueMutex);
         enqueue(ioQueue, proc);
-        pthread_cond_signal(&ioQueueCond);
         pthread_mutex_unlock(&ioQueueMutex);
+        pthread_cond_signal(&ioQueueCond);
     }
-    cpuDone = TRUE;
     return NULL;
 }

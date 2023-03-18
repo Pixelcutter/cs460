@@ -39,6 +39,24 @@ void freeProc(process *proc){
     free(proc);
 }
 
+// frees allocated queues and their processes at main thread end
+void freeQueues(){
+    process* curr = doneQueue->head;
+    process* prev = curr;
+    
+    free(readyQueue);
+    free(ioQueue);
+
+   // freeing up allocated processes 
+    while(curr){
+        prev = curr;
+        curr = curr->nextProc;
+        freeProc(prev);
+    }
+
+    free(doneQueue);
+}
+
 process* dequeue(queue* q){
     if(q->head == NULL)
         return NULL;
