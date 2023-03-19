@@ -37,14 +37,6 @@ process* getHighestPrio(queue* q){
     highestPrio->nextProc = highestPrio->prevProc = NULL;
     q->length--;
 
-    // printf("highest prio = %d | the rest [ ", highestPrio->priority);
-    // process* tmp = q->head;
-    // while(tmp){
-    //     printf("%d, ", tmp->priority);
-    //     tmp = tmp->nextProc;
-    // }
-    // printf(" ]\n");
-
     return highestPrio;
 }
 

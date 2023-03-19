@@ -10,10 +10,8 @@
 void* ioFunc(void* args){
     while(TRUE){
         pthread_mutex_lock(&ioQueueMutex);
-        while(ioQueue->head == NULL){
-            printf("IO is waiting...\n");
+        while(ioQueue->length == 0){
             pthread_cond_wait(&ioQueueCond, &ioQueueMutex);
-            printf("IO is done waiting...\n");
             if(cpuDone){
                 pthread_mutex_unlock(&ioQueueMutex);
                 return NULL;

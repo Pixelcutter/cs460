@@ -12,10 +12,8 @@ void* rrFunc(void* p){
         // catching when ready queue is empty but could still be added to by
         // io or parser threads
         pthread_mutex_lock(&readyQueueMutex);
-        while(readyQueue->head == NULL){
-            printf("CPU waiting...\n");
+        while(readyQueue->length == 0){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
-            printf("CPU done waiting...\n");
         }
         process* proc = dequeue(readyQueue);
         pthread_mutex_unlock(&readyQueueMutex);
@@ -34,7 +32,7 @@ void* rrFunc(void* p){
                 procsCompleted++;
                 proc->finishTimeMillis = currentTimeMillis() - startTimeMillis;
                 enqueue(doneQueue, proc);
-                
+
                 if(procsCompleted == procsSeen && parsingDone){
                     cpuDone = TRUE;
                     pthread_cond_signal(&ioQueueCond);
@@ -51,9 +49,10 @@ void* rrFunc(void* p){
             }
         }
         else{
+            pthread_mutex_lock(&readyQueueMutex);
             enqueue(readyQueue, proc);
+            pthread_mutex_unlock(&readyQueueMutex);
         }
     }
-    // printf("------ CPU DONE -------\n");
     return NULL;
 }

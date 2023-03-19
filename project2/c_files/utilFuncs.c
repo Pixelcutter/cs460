@@ -76,7 +76,7 @@ process* dequeue(queue* q){
 void enqueue(queue* q, process* proc){
     if(q->head == NULL){
         q->head = proc;
-        proc->prevProc = NULL;
+        proc->prevProc = proc->nextProc = NULL;
     }
     else{
         proc->prevProc = q->tail;

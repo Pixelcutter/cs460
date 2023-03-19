@@ -10,7 +10,7 @@ void* fcfsFunc(void* args){
         // catching when ready queue is empty but io or parser threads are still
         // running and could add to ready queue
         pthread_mutex_lock(&readyQueueMutex);
-        while(readyQueue->head == NULL){
+        while(readyQueue->length == 0){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
         }
         process* proc = dequeue(readyQueue);
