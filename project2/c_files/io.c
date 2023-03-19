@@ -4,8 +4,6 @@
 #include <string.h>
 #include "../h_files/global.h"
 #include "../h_files/utilFuncs.h"
-#include "../h_files/sjf.h"
-#include "../h_files/pr.h"
 
 void* ioFunc(void* args){
     while(TRUE){
