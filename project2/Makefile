@@ -1,13 +1,13 @@
 FLAGS = -Wall -Werror
 CC = gcc
 OBJS = main.o utilFuncs.o io.o parser.o printStats.o rr.o sjf.o fcfs.o pr.o
-OUT = main
+OUT = p2
 
-main : $(OBJS)
-	$(CC) $(OBJS) -o $(OUT)
+p2 : $(OBJS)
+	$(CC) $(OBJS) -o $(OUT) && mkdir o_files && mv $(OBJS) o_files/
 
-main.o : main.c h_files/*.h
-	$(CC) main.c -c $(FLAGS)
+main.o : ./c_files/main.c h_files/*.h
+	$(CC) ./c_files/main.c -c $(FLAGS)
 
 parser.o : ./c_files/parser.c ./h_files/global.h ./h_files/utilFuncs.h
 	$(CC) ./c_files/parser.c -c $(FLAGS)
@@ -34,7 +34,7 @@ rr.o : ./c_files/rr.c ./h_files/global.h ./h_files/utilFuncs.h
 	$(CC) ./c_files/rr.c -c $(FLAGS)
 
 clean :
-	rm $(OBJS) $(OUT)
+	rm -rf o_files/ $(OUT)
 
 run :
-	./main
+	./$(OUT)
