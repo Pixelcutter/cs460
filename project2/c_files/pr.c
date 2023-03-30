@@ -52,6 +52,7 @@ void* prFunc(void* args){
         }
         // process* proc = dequeue(readyQueue);
         process* proc = getHighestPrio(readyQueue);
+        proc->readyQueueWaitTime += currentTimeMillis() - proc->readyEnqueueTimeMillis;
         pthread_mutex_unlock(&readyQueueMutex);
         
         int nextBurst = proc->schedule[proc->nextIndex];
@@ -75,7 +76,6 @@ void* prFunc(void* args){
         proc->nextIndex++;
         
         pthread_mutex_lock(&ioQueueMutex);
-        proc->ioEnqueueTimeMillis = currentTimeMillis();
         enqueue(ioQueue, proc);
         pthread_mutex_unlock(&ioQueueMutex);
         pthread_cond_signal(&ioQueueCond);

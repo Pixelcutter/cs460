@@ -14,6 +14,7 @@ void* fcfsFunc(void* args){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
         }
         process* proc = dequeue(readyQueue);
+        proc->readyQueueWaitTime += currentTimeMillis() - proc->readyEnqueueTimeMillis;
         pthread_mutex_unlock(&readyQueueMutex);
         
         int nextBurst = proc->schedule[proc->nextIndex];
@@ -36,7 +37,6 @@ void* fcfsFunc(void* args){
         proc->nextIndex++;
         
         pthread_mutex_lock(&ioQueueMutex);
-        proc->ioEnqueueTimeMillis = currentTimeMillis();
         enqueue(ioQueue, proc);
         pthread_mutex_unlock(&ioQueueMutex);
         pthread_cond_signal(&ioQueueCond);

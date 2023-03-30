@@ -17,7 +17,7 @@ double getAvgWaitTime(){
     process* proc = doneQueue->head;
     int totalWaitTime = 0;
     while(proc){
-        totalWaitTime += ( proc->finishTimeMillis - proc->arrivalTimeMillis ) - (proc->totalBurstTime + proc->ioQueueTime);
+        totalWaitTime += proc->readyQueueWaitTime;
         proc = proc->nextProc;
     }
     return (double)totalWaitTime / doneQueue->length;

@@ -9,13 +9,17 @@
 ```<language>
 <install example>
 ```
+
 ## Usage
 
 ```<language>
 <basic usage>
 ```
+
 ## Authors
+
 <author names>
 
 ## License
+
 <placeholder license>
