@@ -9,8 +9,10 @@
 typedef struct process{
     int priority;
     int totalBurstTime;
+    int ioQueueTime;
     double arrivalTimeMillis;
     double finishTimeMillis;
+    double ioEnqueueTimeMillis;
 
     int nextIndex;
     int scheduleLen;

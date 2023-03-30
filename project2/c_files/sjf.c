@@ -36,14 +36,6 @@ process* getShortest(queue* q){
     lowest->nextProc = lowest->prevProc = NULL;
     q->length--;
 
-    // printf("shortest time = %d | the rest [ ", lowest->schedule[lowest->nextIndex]);
-    // process* tmp = q->head;
-    // while(tmp){
-    //     printf("%d, ", tmp->schedule[tmp->nextIndex]);
-    //     tmp = tmp->nextProc;
-    // }
-    // printf(" ]\n");
-
     return lowest;
 }
 
@@ -81,6 +73,7 @@ void* sjfFunc(void* args){
         proc->nextIndex++;
         
         pthread_mutex_lock(&ioQueueMutex);
+        proc->ioEnqueueTimeMillis = currentTimeMillis();
         enqueue(ioQueue, proc);
         pthread_mutex_unlock(&ioQueueMutex);
         pthread_cond_signal(&ioQueueCond);

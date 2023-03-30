@@ -36,6 +36,7 @@ void* fcfsFunc(void* args){
         proc->nextIndex++;
         
         pthread_mutex_lock(&ioQueueMutex);
+        proc->ioEnqueueTimeMillis = currentTimeMillis();
         enqueue(ioQueue, proc);
         pthread_mutex_unlock(&ioQueueMutex);
         pthread_cond_signal(&ioQueueCond);

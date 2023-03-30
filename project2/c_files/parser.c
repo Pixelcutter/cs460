@@ -12,8 +12,9 @@ process* initProc(char* procLine){
     
     // arrival time = ( current time in ms ) - ( thread start in ms )
     newProc->arrivalTimeMillis = currentTimeMillis() - startTimeMillis;
-    newProc->finishTimeMillis = -1; // acts as a flag
+    newProc->finishTimeMillis = newProc->ioEnqueueTimeMillis = 0;
     newProc->totalBurstTime = 0;
+    newProc->ioQueueTime = 0;
     newProc->nextIndex = 0;
     newProc->prevProc = NULL;
     newProc->nextProc = NULL;

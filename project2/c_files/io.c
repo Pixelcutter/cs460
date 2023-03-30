@@ -18,6 +18,7 @@ void* ioFunc(void* args){
         process* proc = dequeue(ioQueue);
         pthread_mutex_unlock(&ioQueueMutex);
         
+        proc->ioQueueTime += proc->schedule[proc->nextIndex] + (currentTimeMillis() - proc->ioEnqueueTimeMillis);
         usleep(proc->schedule[proc->nextIndex] * 1000);
         proc->nextIndex++;
 
