@@ -26,7 +26,7 @@ double currentTimeMillis(){
     return timeInMillis;
 }
 
-// converts strings to int
+// converts a string (rest) to int
 int strToInt(char* rest){
     int parsedNum;
     sscanf(rest, "%d", &parsedNum);
@@ -57,6 +57,7 @@ void freeQueues(){
     free(doneQueue);
 }
 
+// pops the next proc off of the head of a queue (q)
 process* dequeue(queue* q){
     if(q->head == NULL)
         return NULL;
@@ -73,6 +74,7 @@ process* dequeue(queue* q){
     return proc;
 }
 
+// pushes a proc (proc) onto the tail of a queue (q)
 void enqueue(queue* q, process* proc){
     if(q->head == NULL){
         q->head = proc;

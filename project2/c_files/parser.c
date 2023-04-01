@@ -2,7 +2,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+// parsingDone, queues
 #include "../h_files/global.h"
+// enqueue()
 #include "../h_files/utilFuncs.h"
 
 // initializes proccesses before they are added to the ready queue
@@ -34,6 +36,7 @@ process* initProc(char* procLine){
     return newProc;
 }
 
+// function passed to a thread that will will parse a file and manipulate the ready queue
 void* parseFile(void* p){
     char* fileName = (char*) p;
     FILE* fp = fopen(fileName, "r");
@@ -44,8 +47,10 @@ void* parseFile(void* p){
     char* popped;
     char* tmp;
 
+    // while fp has lines of input: either sleep x, initialize a proc, or stop
     while(nRead = getline(&line, &len, fp), nRead > 0){
-        // rest is lost and can't be free'd once changed by strtok_r
+        // line saved to a temporary variable because it will be
+        // unreachable (can't be freed) once changed by strtok_r
         tmp = line;
         popped = strtok_r(tmp, " ", &tmp);
 
@@ -59,18 +64,17 @@ void* parseFile(void* p){
             continue;
         }
 
+        // proc initialized and added to the ready queue
         process* proc = initProc(tmp);
         pthread_mutex_lock(&readyQueueMutex);
-
         enqueue(readyQueue, proc);
         procsSeen++;
-
         pthread_cond_signal(&readyQueueCond);
         pthread_mutex_unlock(&readyQueueMutex);
     }
     
     fclose(fp);
-    free(line);
+    free(line); // freeing reachable line
     parsingDone = TRUE;
     return NULL;
 }
