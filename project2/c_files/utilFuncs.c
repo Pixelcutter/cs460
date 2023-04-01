@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+// queues
 #include "../h_files/global.h"
 
 // initializes queue data structures

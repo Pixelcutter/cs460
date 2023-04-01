@@ -1,40 +1,53 @@
-FLAGS = -Wall -Werror
-CC = gcc
-OBJS = main.o utilFuncs.o io.o parser.o printStats.o rr.o sjf.o fcfs.o pr.o
-OUT = p2
+OPTIONS = -Wall -Werror
+COMPILER = gcc
+BUILD = build
+OUT = p2 
+CPATH = c_files
+HPATH = h_files
 
-p2 : $(OBJS)
-	$(CC) $(OBJS) -o $(OUT) && mkdir o_files && mv $(OBJS) o_files/
+$(OUT) : $(BUILD)/main.o \
+	 $(BUILD)/utilFuncs.o \
+	 $(BUILD)/io.o \
+	 $(BUILD)/parser.o \
+	 $(BUILD)/printStats.o \
+	 $(BUILD)/rr.o \
+	 $(BUILD)/sjf.o \
+	 $(BUILD)/fcfs.o \
+	 $(BUILD)/pr.o
+	$(COMPILER) $(BUILD)/*.o -o $(OUT)
 
-main.o : ./c_files/main.c h_files/*.h
-	$(CC) ./c_files/main.c -c $(FLAGS)
+$(BUILD)/main.o : $(CPATH)/main.c $(HPATH)/*.h $(BUILD)
+	$(COMPILER) $(CPATH)/main.c -c $(OPTIONS) -o $(BUILD)/main.o -pthread
 
-parser.o : ./c_files/parser.c ./h_files/global.h ./h_files/utilFuncs.h
-	$(CC) ./c_files/parser.c -c $(FLAGS)
+$(BUILD)/parser.o : $(CPATH)/parser.c $(HPATH)/global.h $(HPATH)/utilFuncs.h $(BUILD)
+	$(COMPILER) $(CPATH)/parser.c -c $(OPTIONS) -o $(BUILD)/parser.o -pthread
 
-io.o : ./c_files/io.c ./h_files/global.h ./h_files/utilFuncs.h
-	$(CC) ./c_files/io.c -c $(FLAGS)
+$(BUILD)/io.o : $(CPATH)/io.c $(HPATH)/global.h $(HPATH)/utilFuncs.h $(BUILD)
+	$(COMPILER) $(CPATH)/io.c -c $(OPTIONS) -o $(BUILD)/io.o -pthread
 
-utilFuncs.o : ./c_files/utilFuncs.c ./h_files/global.h
-	$(CC) ./c_files/utilFuncs.c -c $(FLAGS)
+$(BUILD)/utilFuncs.o : $(CPATH)/utilFuncs.c $(HPATH)/global.h $(BUILD)
+	$(COMPILER) $(CPATH)/utilFuncs.c -c $(OPTIONS) -o $(BUILD)/utilFuncs.o -pthread
 
-printStats.o : ./c_files/printStats.c ./h_files/global.h
-	$(CC) ./c_files/printStats.c -c $(FLAGS)
+$(BUILD)/printStats.o : $(CPATH)/printStats.c $(HPATH)/global.h $(BUILD)
+	$(COMPILER) $(CPATH)/printStats.c -c $(OPTIONS) -o $(BUILD)/printStats.o -pthread
 
-sjf.o : ./c_files/sjf.c ./h_files/global.h ./h_files/utilFuncs.h
-	$(CC) ./c_files/sjf.c -c $(FLAGS)
+$(BUILD)/sjf.o : $(CPATH)/sjf.c $(HPATH)/global.h $(HPATH)/utilFuncs.h $(BUILD)
+	$(COMPILER) $(CPATH)/sjf.c -c $(OPTIONS) -o $(BUILD)/sjf.o -pthread
 
-fcfs.o : ./c_files/fcfs.c ./h_files/global.h ./h_files/utilFuncs.h
-	$(CC) ./c_files/fcfs.c -c $(FLAGS)
+$(BUILD)/fcfs.o : $(CPATH)/fcfs.c $(HPATH)/global.h $(HPATH)/utilFuncs.h $(BUILD)
+	$(COMPILER) $(CPATH)/fcfs.c -c $(OPTIONS) -o $(BUILD)/fcfs.o -pthread
 
-pr.o : ./c_files/pr.c ./h_files/global.h ./h_files/utilFuncs.h
-	$(CC) ./c_files/pr.c -c $(FLAGS)
+$(BUILD)/pr.o : $(CPATH)/pr.c $(HPATH)/global.h $(HPATH)/utilFuncs.h $(BUILD)
+	$(COMPILER) $(CPATH)/pr.c -c $(OPTIONS) -o $(BUILD)/pr.o -pthread
 
-rr.o : ./c_files/rr.c ./h_files/global.h ./h_files/utilFuncs.h
-	$(CC) ./c_files/rr.c -c $(FLAGS)
+$(BUILD)/rr.o : $(CPATH)/rr.c $(HPATH)/global.h $(HPATH)/utilFuncs.h $(BUILD)
+	$(COMPILER) $(CPATH)/rr.c -c $(OPTIONS) -o $(BUILD)/rr.o -pthread
+
+$(BUILD) :
+	mkdir -p $(BUILD)
 
 clean :
-	rm -rf o_files/ $(OUT)
+	rm -rf $(BUILD) $(OUT)
 
 run :
 	./$(OUT)

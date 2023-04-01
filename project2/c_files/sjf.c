@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+// procsSeen, procsCompleted, cpuDone, parsingDone, queues, mutexes
 #include "../h_files/global.h"
+// enqueue(), dequeue(), currentTimeMillis()
 #include "../h_files/utilFuncs.h"
 
 // searches q for the proc with the lowest burst time and then returns it
@@ -59,6 +61,8 @@ void* sjfFunc(void* args){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
         }
         process* proc = getShortest(readyQueue);
+        // time diff between ready queue entry and exit added to wait time
+        proc->readyQueueWaitTime += currentTimeMillis() - proc->readyEnqueueTimeMillis;
         pthread_mutex_unlock(&readyQueueMutex);
         
         int nextBurst = proc->schedule[proc->nextIndex];

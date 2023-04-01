@@ -4,7 +4,7 @@
 #include <string.h>
 // procsSeen, procsCompleted, cpuDone, parsingDone, queues, mutexes
 #include "../h_files/global.h" 
-// enqueue(), dequeue()
+// enqueue(), dequeue(), currentTimeMillis()
 #include "../h_files/utilFuncs.h"
 
 // searches q for the proc with the highest priority and then returns it
@@ -61,6 +61,8 @@ void* prFunc(void* args){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
         }
         process* proc = getHighestPrio(readyQueue);
+        // time diff between ready queue entry and exit added to wait time
+        proc->readyQueueWaitTime += currentTimeMillis() - proc->readyEnqueueTimeMillis;
         pthread_mutex_unlock(&readyQueueMutex);
         
         int nextBurst = proc->schedule[proc->nextIndex];

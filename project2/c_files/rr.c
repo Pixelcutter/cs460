@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+// procsSeen, procsCompleted, cpuDone, parsingDone, queues, mutexes
 #include "../h_files/global.h"
+// enqueue(), dequeue(), currentTimeMillis()
 #include "../h_files/utilFuncs.h"
 
 // function that is passed to a thread that acts as a cpu scheduler following
@@ -21,6 +23,8 @@ void* rrFunc(void* p){
             pthread_cond_wait(&readyQueueCond, &readyQueueMutex);
         }
         process* proc = dequeue(readyQueue);
+        // time diff between ready queue entry and exit added to wait time
+        proc->readyQueueWaitTime += currentTimeMillis() - proc->readyEnqueueTimeMillis;
         pthread_mutex_unlock(&readyQueueMutex);
         
         int nextBurst = proc->schedule[proc->nextIndex];
@@ -65,6 +69,8 @@ void* rrFunc(void* p){
             // if proc not done and current burst time != 0:
             // obtain ready queue lock and add process to ready queue
             pthread_mutex_lock(&readyQueueMutex);
+            // readyQueue entry timestamp
+            proc->readyEnqueueTimeMillis = currentTimeMillis();
             enqueue(readyQueue, proc);
             pthread_mutex_unlock(&readyQueueMutex);
         }

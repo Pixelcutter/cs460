@@ -2,9 +2,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-// parsingDone, queues
+// parsingDone, queues, startTimeMillis, mutexes
 #include "../h_files/global.h"
-// enqueue()
+// enqueue(), currentTimeMillis()
 #include "../h_files/utilFuncs.h"
 
 // initializes proccesses before they are added to the ready queue
@@ -14,8 +14,9 @@ process* initProc(char* procLine){
     
     // arrival time = ( current time in ms ) - ( thread start in ms )
     newProc->arrivalTimeMillis = currentTimeMillis() - startTimeMillis;
-    newProc->finishTimeMillis = -1; // acts as a flag
+    newProc->finishTimeMillis = newProc->readyEnqueueTimeMillis = 0;
     newProc->totalBurstTime = 0;
+    newProc->readyQueueWaitTime = 0;
     newProc->nextIndex = 0;
     newProc->prevProc = NULL;
     newProc->nextProc = NULL;
@@ -67,6 +68,8 @@ void* parseFile(void* p){
         // proc initialized and added to the ready queue
         process* proc = initProc(tmp);
         pthread_mutex_lock(&readyQueueMutex);
+        // readyQueue entry timestamp
+        proc->readyEnqueueTimeMillis = currentTimeMillis();
         enqueue(readyQueue, proc);
         procsSeen++;
         pthread_cond_signal(&readyQueueCond);

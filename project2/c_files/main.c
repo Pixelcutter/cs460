@@ -1,10 +1,26 @@
-/**/
+/*
+name: Jared Diamond
+class: CS 460
+professor: Bonamy
+project: CPU Scheduling
+
+Project description: "In this assignment, you are asked to implement a program which will use a minimum of
+three threads to allow us to measure the performance (i.e. throughput, turnaround time,
+and waiting time in the ready queue) of the four basic CPU scheduling algorithms: First
+Come First Serve (FCFS), Shortest Job First (SJF), Priority (PR), and Round-Robin (RR).
+Your program will be emulating/simulating the processes whose priority, sequence of CPU
+burst time and I/O burst time will be given in an input file."
+
+Burst times are simulated with a sleep call for the appropriate amount of milliseconds.
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "../h_files/global.h"
 #include "../h_files/fcfs.h"
 #include "../h_files/io.h"
+// currentTimeMillis(), freeQueues()
 #include "../h_files/utilFuncs.h"
 #include "../h_files/parser.h"
 #include "../h_files/sjf.h"
@@ -12,6 +28,7 @@
 #include "../h_files/rr.h"
 #include "../h_files/printStats.h"
 
+// global variables found in global.h
 int parsingDone, cpuDone, procsSeen, procsCompleted;
 double startTimeMillis, endTimeMillis;
 queue *readyQueue, *ioQueue, *doneQueue;
@@ -43,6 +60,9 @@ int main(int argc, char *argv[]){
     char* fileName;
     int quantum;
 
+    // if algStr == RR: check for correct arguments and start cpu thread with RR algo
+    // else: start thread with another legal alg
+    // start parser thread in either case
     if(!strcmp(algStr, "RR")){
         if(argc != 7)
             errExit("Not enough arguments\nUsage: ./exec -alg RR -quantum [integer(ms)] -input [filename]");
@@ -79,6 +99,7 @@ int main(int argc, char *argv[]){
             errExit("Scheduling algorithm not recognized");
     }
 
+    // io thread started and detached
     pthread_create(&ioThread, NULL, &ioFunc, NULL);
     pthread_detach(ioThread);
 
@@ -91,5 +112,6 @@ int main(int argc, char *argv[]){
     pthread_cond_destroy(&readyQueueCond);
     pthread_cond_destroy(&ioQueueCond);
 
+    // all threads done, time to clean up memory
     freeQueues();
 }

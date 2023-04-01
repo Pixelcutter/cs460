@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+// cpuDone, queues, mutexes
 #include "../h_files/global.h"
+// enqueue(), dequeue(), currentTimeMillis()
 #include "../h_files/utilFuncs.h"
 
 // function that is passed to a thread that acts as an io scheduler
@@ -30,6 +32,8 @@ void* ioFunc(void* args){
         // obtain ready queue lock, add process to ready queue
         // and signal when done
         pthread_mutex_lock(&readyQueueMutex);
+        // readyQueue entry timestamp
+        proc->readyEnqueueTimeMillis = currentTimeMillis();
         enqueue(readyQueue, proc);
         pthread_mutex_unlock(&readyQueueMutex);
         pthread_cond_signal(&readyQueueCond);
