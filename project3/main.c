@@ -23,6 +23,19 @@ typedef struct threadInfo{
     char* backupFilePath;
 } threadInfo;
 
+typedef struct dirInfo{
+    int threadNum;
+    char* rootDir;
+    char* backupDirPath;
+} dirInfo;
+
+typedef struct fileInfo{
+    int threadNum;
+    char* filename;
+    char* filePath;
+    char* fileBackupPath;
+} fileInfo;
+
 char* appendBackup(char* filePath){
     int len = strlen(filePath);
     char* newStr = calloc(len + 9, sizeof(char)); // len('/.backup\0') = 9
@@ -32,16 +45,14 @@ char* appendBackup(char* filePath){
     return newStr;
 }
 
-char* appendBak(char* filename){}
-
-threadInfo* initThreadInfo(char* filename, char* rootDir){
-    threadInfo* newInfo = malloc(sizeof(threadInfo));
-    newInfo->threadNum = ++threadNum;
-    newInfo->filename = filename;
-    newInfo->rootDir = rootDir;
-    newInfo->backupPath = appendBackup(rootDir);
-    return newInfo;
+char* appendBak(char* filename){
+    char* newFilename = calloc(strlen(filename) + 5, sizeof(char));
+    strcat(newFilename, filename);
+    strcat(newFilename, ".bak");
+    return newFilename;
 }
+
+
 
 int openFile(char* filename, int flags, int perms){
     int fd;
@@ -66,20 +77,20 @@ int writeFile(int src, int dest){
 }
 
 void* copyFile(void* args){
-    threadInfo *tInfo = (threadInfo*)args;
-    char* backupFilePath = appendBak(tInfo->filename);
+    fileInfo *fInfo = (fileInfo*)args;
+    char* backupFilePath = appendBak(fInfo->filename);
     int src, dest;
 
-    src = openFile(tInfo->filename, O_RDONLY, 0);
-    dest = openFile(backupFilePath, O_WRONLY|O_CREAT, 0666);
+    src = openFile(fInfo->filePath, O_RDONLY, 0);
+    dest = openFile(fInfo->fileBackupPath, O_WRONLY|O_CREAT, 0666);
     int totalBytesWritten = writeFile(src, dest);
 
-    printf("[thread %d] Copied %d bytes from %s to %s.bak\n", tInfo->threadNum, totalBytesWritten, tInfo->filename, tInfo->filename);
+    printf("[thread %d] Copied %d bytes from %s to %s.bak\n", fInfo->threadNum, totalBytesWritten, fInfo->filename, fInfo->filename);
 
     close(src);
     close(dest);
-    free(backupFilePath);
-    free(tInfo);    
+    free(fInfo->filePath);
+    free(fInfo->fileBackupPath);    
 
     return NULL;
 }
@@ -93,6 +104,24 @@ char* buildPath(char* rootDir, char* dName){
     return path;
 }
 
+threadInfo* initThreadInfo(char* filename, char* rootDir){
+    threadInfo* newInfo = malloc(sizeof(threadInfo));
+    newInfo->threadNum = ++threadNum;
+    newInfo->filename = filename;
+    newInfo->rootDir = rootDir;
+    newInfo->backupPath = appendBackup(rootDir);
+    return newInfo;
+}
+
+fileInfo* initFileInfo(char* filename, char* dirname){
+    fileInfo* newInfo = malloc(sizeof(fileInfo));
+    newInfo->threadNum = ++threadNum;
+    newInfo->filename = filename;
+    newInfo->filePath = buildPath(dirname, filename);
+    newInfo->fileBackupPath = buildPath(appendBackup(dirname), appendBak(filename));
+    return newInfo;
+}
+
 void* listFiles(void* args) {
     threadInfo* dtInfo;
     threadInfo* tInfo = (threadInfo*)args;
@@ -104,7 +133,7 @@ void* listFiles(void* args) {
         return NULL;
 
     char* backupPath = tInfo->backupPath;
-    if(mkdir(backupPath, 0666) < 0 && errno != EEXIST)
+    if(mkdir(backupPath, 0777) < 0 && errno != EEXIST)
         printf("mkdir error: %s\n", strerror(errno));
 
     DIR* backupDir;
@@ -116,13 +145,16 @@ void* listFiles(void* args) {
     struct dirent* entity;
     entity = readdir(dir);
     while (entity = readdir(dir), entity) {
-        printf("%hhd %s/%s\n", entity->d_type, dirname, entity->d_name);
+        // printf("%hhd %s/%s\n", entity->d_type, dirname, entity->d_name);
         if(entity->d_type == DT_DIR){
             if(!strcmp(entity->d_name, ".") || !strcmp(entity->d_name, "..") || !strcmp(entity->d_name, ".backup"))
                 continue;
 
+            // printf("d_name: %s\n", entity->d_name);
             char* rootDir = buildPath(dirname, entity->d_name);
+            pthread_mutex_lock(&threadNum_mutex);
             dtInfo = initThreadInfo(NULL, rootDir);
+            pthread_mutex_unlock(&threadNum_mutex);
             pthread_t thread;
             pthread_create(&thread, NULL, &listFiles, dtInfo);
             pthread_join(thread, NULL);
@@ -131,8 +163,16 @@ void* listFiles(void* args) {
             free(dtInfo->backupPath);
             free(dtInfo);
         }
-        else{
-
+        else if(entity->d_type == DT_REG){
+            pthread_t t1;
+            pthread_mutex_lock(&threadNum_mutex);
+            fileInfo* fInfo = initFileInfo(entity->d_name, dirname);
+            pthread_mutex_unlock(&threadNum_mutex);
+            // printf("filename: %s | rootdir: %s\n", fInfo->filename, dirname);
+            // printf("regular path: %s\n", fInfo->filePath);
+            // printf("backup path: %s\n", fInfo->fileBackupPath);
+            pthread_create(&t1, NULL, &copyFile, fInfo);
+            pthread_join(t1, NULL);
         }
     }
 
@@ -145,16 +185,10 @@ int main(int argc, char* argv[]){
     threadInfo* mainInfo = initThreadInfo(NULL, ".");
 
     pthread_t t1;
-    
-    // threadInfo *tInfo = malloc(sizeof(threadInfo));
-    // tInfo->threadNum = 1;
-    // tInfo->filename = argv[1];
-
     pthread_create(&t1, NULL, &listFiles, mainInfo);
     pthread_join(t1, NULL);
 
     // listFiles(mainInfo->filename);
-    printf("id: %d | name: %s\n", mainInfo->threadNum, mainInfo->filename);
     free(mainInfo->backupPath);
     free(mainInfo);
     pthread_mutex_destroy(&threadNum_mutex);
