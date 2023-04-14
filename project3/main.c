@@ -13,10 +13,13 @@
 #include <time.h>
 
 void* backupFiles(void* args);
+void* restoreFiles(void* args);
 
 // threadNum incremented each time a new dir or file is backed up / restored
 int threadNum = 0;
 pthread_mutex_t threadNum_mutex;
+
+short isRestore = 0;
 
 typedef struct dirInfo{
     int threadNum;
@@ -27,8 +30,8 @@ typedef struct dirInfo{
 typedef struct fileInfo{
     int threadNum;
     char* filename;
-    char* filePath;
-    char* fileBackupPath;
+    char* fileSrcPath;
+    char* fileDestPath;
 } fileInfo;
 
 int openFile(char* filename, int flags, int perms){
@@ -40,7 +43,11 @@ int openFile(char* filename, int flags, int perms){
     return fd;
 }
 
-int writeFile(int src, int dest){
+void writeFile(fileInfo* fInfo){
+    int src = openFile(fInfo->fileSrcPath, O_RDONLY, 0);
+    int dest = openFile(fInfo->fileDestPath, O_WRONLY|O_CREAT, 0666);
+
+    // int totalBytesWritten = writeFile(src, dest);
     int buffSize = 56, amtRead = 0;
     char buffer[buffSize];
 
@@ -50,17 +57,7 @@ int writeFile(int src, int dest){
         write(dest, buffer, amtRead);
     }
 
-    return totalBytesWritten;
-}
-
-void* printWrite(fileInfo* fInfo){
-    int src = openFile(fInfo->filePath, O_RDONLY, 0);
-    int dest = openFile(fInfo->fileBackupPath, O_WRONLY|O_CREAT, 0666);
-
-    int totalBytesWritten = writeFile(src, dest);
-
-    printf("[thread %d] Copied %d bytes from %s to %s.bak\n", fInfo->threadNum, totalBytesWritten, fInfo->filename, fInfo->filename);
-    return NULL;
+    printf("[thread %d] Copied %d bytes from %s to %s\n", fInfo->threadNum, totalBytesWritten, fInfo->fileSrcPath, fInfo->fileDestPath);
 
     close(src);
     close(dest);
@@ -71,28 +68,28 @@ void* copyToBackupFile(void* args){
     int src, dest;
     struct stat srcStat, destStat;
 
-    int srcStatStatus = stat(fInfo->filePath, &srcStat);
-    int destStatStatus = stat(fInfo->fileBackupPath, &destStat);
+    int srcStatStatus = stat(fInfo->fileSrcPath, &srcStat);
+    int destStatStatus = stat(fInfo->fileDestPath, &destStat);
     if(destStatStatus < 0){
-        printWrite(fInfo);
+        writeFile(fInfo);
         return NULL;
     }
    
     time_t srcTime, destTime;
-    srcTime = srcStat.st_mtime;
-    destTime = destStat.st_mtime;
+    srcTime = srcStat.st_ctime;
+    destTime = destStat.st_ctime;
     
     long diffTime = difftime(srcTime, destTime);
     
     if(diffTime > 0){
         printf("[thread %d] WARNING: Overwriting %s.bak\n", fInfo->threadNum, fInfo->filename);
     }
-    else if(srcTime <= destTime){
+    else{
         printf("[thread %d] %s does not need backing up\n", fInfo->threadNum, fInfo->filename);
         return NULL;
     }
 
-    printWrite(fInfo);
+    writeFile(fInfo);
 
     return NULL;
 }
@@ -125,15 +122,15 @@ fileInfo* initFileInfo(char* filename, char* dirPath){
     newInfo->filename = filename;
     
     char* filePath[] = {dirPath, "/", filename, NULL};
-    newInfo->filePath = pathFromArray(filePath);
+    newInfo->fileSrcPath = pathFromArray(filePath);
 
     char* fileBackupPath[] = {dirPath, "/.backup/", filename, ".bak", NULL};
-    newInfo->fileBackupPath = pathFromArray(fileBackupPath);
+    newInfo->fileDestPath = pathFromArray(fileBackupPath);
 
     return newInfo;
 }
 
-void backupDir(char* dirPath, char* newDirName){
+void followDir(char* dirPath, char* newDirName){
     char* rootDirPath[] = {dirPath, "/", newDirName, NULL};
     char* rootDir = pathFromArray(rootDirPath);
     pthread_mutex_lock(&threadNum_mutex);
@@ -141,7 +138,10 @@ void backupDir(char* dirPath, char* newDirName){
     pthread_mutex_unlock(&threadNum_mutex);
     
     pthread_t t1;
-    pthread_create(&t1, NULL, &backupFiles, dtInfo);
+    if(isRestore)
+        pthread_create(&t1, NULL, &restoreFiles, dtInfo);
+    else
+        pthread_create(&t1, NULL, &backupFiles, dtInfo);
     pthread_join(t1, NULL);
     
     free(rootDir);
@@ -158,9 +158,83 @@ void backupFile(char* filename, char* dirPath){
     pthread_create(&t1, NULL, &copyToBackupFile, fInfo);
     pthread_join(t1, NULL);
     
-    free(fInfo->fileBackupPath);
-    free(fInfo->filePath);
+    free(fInfo->fileDestPath);
+    free(fInfo->fileSrcPath);
     free(fInfo);
+}
+
+fileInfo* initRestoreFileInfo(char* filename, char* dirPath){
+    fileInfo* newInfo = malloc(sizeof(fileInfo));
+    newInfo->threadNum = ++threadNum;
+    newInfo->filename = filename;
+    
+    char* filePath[] = {dirPath, "/.backup/", filename, NULL};
+    newInfo->fileSrcPath = pathFromArray(filePath);
+
+    int i = 0, destLen = strlen(filename) - 4;
+    char destPath[destLen];
+    for(i; i < destLen; i++)
+        destPath[i] = filename[i];
+    destPath[i] = '\0';
+
+    char* fileBackupPath[] = {dirPath, "/", destPath,  NULL};
+    newInfo->fileDestPath = pathFromArray(fileBackupPath);
+
+    return newInfo;
+}
+
+void* restoreFile(void* args){
+    fileInfo *fInfo = (fileInfo*)args;
+    int src, dest;
+    struct stat srcStat, destStat;
+
+    int srcStatStatus = stat(fInfo->fileSrcPath, &srcStat);
+    int destStatStatus = stat(fInfo->fileDestPath, &destStat);
+    if(destStatStatus < 0){
+        writeFile(fInfo);
+        return NULL;
+    }
+   
+    time_t srcTime, destTime;
+    srcTime = srcStat.st_ctime;
+    destTime = destStat.st_ctime;
+    
+    long diffTime = difftime(destTime, srcTime);
+    
+    if(diffTime >= 0){
+        int i = 0, len = strlen(fInfo->filename) - 4;
+        char filename[len];
+        for(i; i < len; i++)
+            filename[i] = fInfo->filename[i];
+        filename[i] = '\0';
+        printf("[thread %d] %s is already the most current version\n", fInfo->threadNum, filename);
+        return NULL;
+    }
+
+    writeFile(fInfo);
+    return NULL;
+}
+
+void restoreBackups(dirInfo* dInfo){
+    DIR* backupDirPath = opendir(dInfo->dirBackupPath);
+    if(backupDirPath == NULL)
+        return;
+
+    struct dirent* file = readdir(backupDirPath);
+    while (file = readdir(backupDirPath), file) {
+        if(!strcmp(file->d_name, ".") || !strcmp(file->d_name, ".."))
+            continue;
+        
+        pthread_t t1;
+        fileInfo* fInfo = initRestoreFileInfo(file->d_name, dInfo->dirPath);
+        pthread_create(&t1, NULL, &restoreFile, fInfo);
+        pthread_join(t1, NULL);
+        free(fInfo->fileDestPath);
+        free(fInfo->fileSrcPath);
+        free(fInfo);
+    }
+    
+    closedir(backupDirPath);
 }
 
 void* restoreFiles(void* args) {
@@ -171,28 +245,21 @@ void* restoreFiles(void* args) {
     if (dir == NULL)
         return NULL;
 
-    char* dirBackupPath = dInfo->dirBackupPath;
-
-    DIR* backupDirPath;
-    backupDirPath = opendir(dirBackupPath);
-    if(backupDirPath == NULL)
-        return NULL;
-
     struct dirent* file;
     file = readdir(dir);
     while (file = readdir(dir), file) {
         if(file->d_type == DT_DIR){
-            if(!strcmp(file->d_name, ".") || !strcmp(file->d_name, "..") || strcmp(file->d_name, ".backup"))
+            if(!strcmp(file->d_name, ".") || !strcmp(file->d_name, ".."))
                 continue;
-            backupDir(dirPath, file->d_name);
-        }
-        else if(file->d_type == DT_REG){
-            backupFile(file->d_name, dirPath);
+         
+            if(!strcmp(file->d_name, ".backup"))
+                restoreBackups(dInfo);
+            else
+                followDir(dirPath, file->d_name);
         }
     }
 
     closedir(dir);
-    closedir(backupDirPath);
     return NULL;
 }
 
@@ -208,18 +275,12 @@ void* backupFiles(void* args) {
     if(mkdir(dirBackupPath, 0777) < 0 && errno != EEXIST)
         printf("mkdir error: %s\n", strerror(errno));
 
-    DIR* backupDirPath;
-    backupDirPath = opendir(dirBackupPath);
-    if(backupDirPath == NULL)
-        return NULL;
-
-    struct dirent* file;
-    file = readdir(dir);
+    struct dirent* file = readdir(dir);
     while (file = readdir(dir), file) {
         if(file->d_type == DT_DIR){
             if(!strcmp(file->d_name, ".") || !strcmp(file->d_name, "..") || !strcmp(file->d_name, ".backup"))
                 continue;
-            backupDir(dirPath, file->d_name);
+            followDir(dirPath, file->d_name);
         }
         else if(file->d_type == DT_REG){
             backupFile(file->d_name, dirPath);
@@ -227,21 +288,27 @@ void* backupFiles(void* args) {
     }
 
     closedir(dir);
-    closedir(backupDirPath);
     return NULL;
 }
 
 int main(int argc, char* argv[]){
-    if(argc > 1 && strcmp(argv[1], "-r") != 0){
-        printf("Invalid arguments\nUsage: ./BackItUp [-r]\n");
-        return 1;
+    if(argc > 1){
+        if(strcmp(argv[1], "-r") == 0)
+            isRestore = 1;
+        else{
+            printf("Invalid arguments\nUsage: ./BackItUp [-r]\n");
+            return 1;
+        }
     }
 
     pthread_mutex_init(&threadNum_mutex, NULL);
     dirInfo* mainInfo = initDirInfo(".");
 
     pthread_t t1;
-    pthread_create(&t1, NULL, &backupFiles, mainInfo);
+    if(isRestore)
+        pthread_create(&t1, NULL, &restoreFiles, mainInfo);
+    else
+        pthread_create(&t1, NULL, &backupFiles, mainInfo);
     pthread_join(t1, NULL);
 
     free(mainInfo->dirBackupPath);
